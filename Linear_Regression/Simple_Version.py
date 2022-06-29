@@ -55,3 +55,7 @@ def train():
     print('w的估计误差：', true_w - w.reshape(true_w.shape))
     b = net[0].bias.data
     print('b的估计误差：', true_b - b)
+
+if __name__ == "__main__":
+    train()
+
