@@ -1,3 +1,5 @@
+from ctypes import resize
+from bitarray import test
 from psutil import net_connections
 import torch
 from torch import conv2d, nn, relu
@@ -26,3 +28,9 @@ net = nn.Sequential(
     nn.Dropout(p=0.5),
     nn.Linear(4096, 10)
 )
+
+batch_size=128
+train_iter, test_iter = d2l.load_data_fashion_mnist(batch_size, resize=224)
+lr=0.01
+num_epochs = 10
+d2l.train_ch6(net, train_iter, test_iter, num_epochs, lr, d2l.try_gpu())
