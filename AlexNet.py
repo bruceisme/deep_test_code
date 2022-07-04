@@ -1,6 +1,3 @@
-from ctypes import resize
-from bitarray import test
-from psutil import net_connections
 import torch
 from torch import conv2d, nn, relu
 from d2l import torch as d2l
