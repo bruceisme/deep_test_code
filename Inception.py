@@ -1,6 +1,3 @@
-from turtle import forward
-from sklearn.cluster import k_means
-from sklearn.model_selection import train_test_split
 import torch
 from torch import nn
 from torch.nn import functional as F
