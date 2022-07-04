@@ -26,7 +26,7 @@ net = nn.Sequential(
     nn.Linear(4096, 10)
 )
 
-def trian():
+def train():
     batch_size=128
     train_iter, test_iter = d2l.load_data_fashion_mnist(batch_size, resize=224)
     lr=0.01
