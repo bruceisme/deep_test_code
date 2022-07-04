@@ -42,7 +42,7 @@ net = vgg(conv_arch)
 def train():
     lr=0.1
     num_epochs=10
-    batch = 128
+    batch_size = 128
     train_iter, test_iter = d2l.load_data_fashion_mnist(batch_size, resize=224)
     d2l.train_ch6(net, train_iter, test_iter, num_epochs, lr, d2l.try_gpu())
 
