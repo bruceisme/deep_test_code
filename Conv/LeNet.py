@@ -69,7 +69,6 @@ def init__weight(m):
         nn.init.xavier_uniform_(m.weight)
 
 def train_ch6(net, num_epochs, lr, device, batch_size):
-    train_iter, test_iter = d2l.load_data_fashion_mnist(batch_size=batch_size)
     net.apply(init__weight)
     print('training on', device)
     net.to(device)
