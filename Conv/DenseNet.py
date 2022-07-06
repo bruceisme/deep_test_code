@@ -57,7 +57,7 @@ def create_net():
                         *blks,
                         nn.BatchNorm2d(num_channels),
                         nn.ReLU(),
-                        nn.AdaptiveAvgPool1d(1,1),
+                        nn.AdaptiveAvgPool1d((1,1)),
                         nn.Flatten(),
                         nn.Linear(num_channels,10))
 
