@@ -1,6 +1,3 @@
-from turtle import forward
-from sklearn.cluster import k_means
-from sklearn.model_selection import train_test_split
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -23,7 +20,7 @@ class Inception(nn.Module):
 
         #c4,3x3maxpool+1x1卷积
         self.p4_1=nn.MaxPool2d(kernel_size=3, stride=1,padding=1)
-        self.p4_2=nn.Conv2d(c4[0], c4[1], kernel_size=1)
+        self.p4_2=nn.Conv2d(in_channels, c4, kernel_size=1)
     
     def forward(self, x):
         p1 = F.relu(self.p1_1(x))
@@ -34,7 +31,7 @@ class Inception(nn.Module):
         #在通道维度上连接
         return torch.cat((p1,p2,p3,p4), dim=1)
 
-b1 = nn.Sequential(nn.Conv2d(1,64,kernel_size==7,stride=2, padding=3),
+b1 = nn.Sequential(nn.Conv2d(1,64,kernel_size=7,stride=2, padding=3),
                     nn.ReLU(),
                     nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
                     nn.Conv2d(64,64,kernel_size=1),
@@ -64,12 +61,12 @@ b4=nn.Sequential(Inception(832,256,(160,320),(32,128),128),
 )#bx1024
 net = nn.Sequential(b1,b2,b3,b4,nn.Linear(1024,10))#bx10
 
-def trian():
+def train():
     lr=0.1
     num_epochs=10
     batch_size=128
     train_iter,test_iter = d2l.load_data_fashion_mnist(batch_size, resize=96)
-    d2l.train_ch6(net,train_iter, test_iter, num_epochs,lr,d2l.trygpu())
+    d2l.train_ch6(net,train_iter, test_iter, num_epochs,lr,d2l.try_gpu())
 
 
 if __name__ == "__main__":
