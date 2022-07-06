@@ -20,7 +20,7 @@ class Inception(nn.Module):
 
         #c4,3x3maxpool+1x1卷积
         self.p4_1=nn.MaxPool2d(kernel_size=3, stride=1,padding=1)
-        self.p4_2=nn.Conv2d(c4[0], c4[1], kernel_size=1)
+        self.p4_2=nn.Conv2d(in_channels, c4, kernel_size=1)
     
     def forward(self, x):
         p1 = F.relu(self.p1_1(x))
@@ -61,7 +61,7 @@ b4=nn.Sequential(Inception(832,256,(160,320),(32,128),128),
 )#bx1024
 net = nn.Sequential(b1,b2,b3,b4,nn.Linear(1024,10))#bx10
 
-def trian():
+def train():
     lr=0.1
     num_epochs=10
     batch_size=128
