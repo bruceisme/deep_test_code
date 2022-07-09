@@ -1,6 +1,7 @@
 %matplotlib inline
 from cProfile import label
 from operator import index
+from regex import F
 import torch
 import torchvision
 from torch.utils import data
@@ -29,7 +30,7 @@ train_transform = transforms.Compose([
                     transforms.RandomResizedCrop(128, scale=(0.08, 1.0), ratio=(3.0/4.0, 4.0/3.0)),
                     transforms.RandomHorizontalFlip(),
                     transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
-                    transforms.Totnesor(),
+                    transforms.ToTensor(),
                     transforms.Normalize([0.485, 0.456,0.406],[0.229, 0.224, 0.225])])
 
 test_transform = transforms.Compose([
@@ -42,7 +43,8 @@ test_transform = transforms.Compose([
 class LeavesSet(data.Dataset):
     #构建数据集
     def __init__(self, images_path, images_label, transform=None, train=True):
-        self.imgs=[os.path.join('./data/classify-leaves',"".join(image_path)) for image_path in images_path]
+        #self.imgs=[os.path.join('./data/classify-leaves',"".join(image_path)) for image_path in images_path]
+        self.imgs=[os.path.join('./',"".join(image_path)) for image_path in images_path]
 
         if train:
             self.train=True
@@ -64,7 +66,7 @@ class LeavesSet(data.Dataset):
         data = transform(pil_img)
 
         if self.train:
-            image_label=self.lanbels[index]
+            image_label=self.labels[index]
             return data, image_label
         else:
             return data
@@ -73,8 +75,8 @@ class LeavesSet(data.Dataset):
         return len(self.imgs)
 
 def load_data_leaves(train_transform=None, test_transform=None):
-    train_data = pd.read_csv('./data/classify-leaves/train.csv')
-    test_data = pd.read_csv('./data/classify-leaves/test.csv')
+    train_data = pd.read_csv('./train.csv')
+    test_data = pd.read_csv('./test.csv')
 
     labelencoder = LabelEncoder()
     labelencoder.fit(train_data['label'])
@@ -88,6 +90,10 @@ def load_data_leaves(train_transform=None, test_transform=None):
     return (train_dataSet, test_dataSet, label_map, label_inv_map)
 
 train_dataset, test_dataset, label_map, label_inv_map = load_data_leaves(train_transform, test_transform)
+for X, y in train_dataset:
+      print(X.shape, X.dtype, y.shape, y.dtype)
+      print(X,y)
+      break
 
 class Residual(nn.Module):  
     #stride为2时，特征高宽减半
@@ -137,3 +143,96 @@ def create_net():
                     nn.Linear(512, 10)
 )
 
+def train():
+    # Configuration options
+    k_folds = 5
+    num_epochs = 20
+    learning_rate = 1e-4
+    weight_decay = 1e-3
+    loss_function = nn.CrossEntropyLoss()
+    # For fold results
+    results = {}
+
+    # Set fixed random number seed
+    torch.manual_seed(1)
+
+    device = d2l.try_gpu()
+
+    # Define the K-fold Cross Validator
+    kfold = KFold(n_splits=k_folds, shuffle=True)
+    for fold, (train_ids, valid_ids) in enumerate(kfold.split(train_dataset)):
+        print(f'FOLD{fold}')
+
+        train_subsampler = torch.utils.data.SubsetRandomSampler(train_ids)
+        valid_subsampler = torch.utils.data.SubsetRandomSampler(valid_ids)
+
+        trainloader = torch.utils.data.DataLoader(train_dataset, batch_size=128, sampler=train_subsampler, num_workers=get_dataloader_workers())
+        validloader = torch.utils.data.DataLoader(train_dataset, batch_size=128, sampler=valid_subsampler, num_workers=get_dataloader_workers())
+        
+        net = create_net()
+        net = net.to(device)
+        net.device= device
+
+        optimizer = torch.optim.Adam(net.parameters(),lr=learning_rate,weight_decay= weight_decay)
+        scheduler = CosineAnnealingLR(optimizer,T_max=10)
+
+        for epoch in range(0,num_epochs):
+            net.train()
+            print(f'epoch {epoch+1}')
+
+            train_losses=[]
+            train_accs=[]
+
+            for batch in tqdm(trainloader):
+                imgs, labels=batch
+                imgs = imgs.to(device)
+                y = labels.to(device)
+
+                y_hat = net(imgs)
+                loss = loss_function(y_hat, labels)
+
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+
+                acc=(y_hat.argmax(dim=-1)==y).float().mean()
+
+                train_losses.append(loss.item())
+                train_accs.append(acc)
+
+            scheduler.step()
+        train_loss = np.sum(train_losses)/len(train_losses)
+        train_acc = np.sum(train_accs)/len(train_accs)
+
+        print(f"[ Train | {epoch + 1:03d}/{num_epochs:03d} ] loss = {train_loss:.5f}, acc = {train_acc:.5f}")
+
+
+        net.eval()
+        valid_losses = []
+        valid_accs = []
+        with torch.no_grad():
+            for batch in tqdm(validloader):
+                imgs, labels = batch
+                # No gradient in validation
+                logits = model(imgs.to(device))
+                loss = loss_function(logits,labels.to(device))
+                acc = (logits.argmax(dim=-1) == labels.to(device)).float().mean()
+                # Record loss and accuracy
+                valid_losses.append(loss.item())        
+                valid_accs.append(acc)
+            valid_loss = np.sum(valid_losses)/len(valid_losses)
+            valid_acc = np.sum(valid_accs)/len(valid_accs)
+            print(f"[ Valid | {epoch + 1:03d}/{num_epochs:03d} ] loss = {valid_loss:.5f}, acc = {valid_acc:.5f}")
+            print('Accuracy for fold %d: %d' % (fold, valid_acc))
+
+
+    print(f'K-FOLD CROSS VALIDATION RESULTS FOR {k_folds} FOLDS')
+    print('--------------------------------')
+    total_summation = 0.0
+    for key, value in results.items():
+        print(f'Fold {key}: {value} ')
+        total_summation += value
+    print(f'Average: {total_summation/len(results.items())} ')
+
+if __name__ == "__main__":
+    train()
