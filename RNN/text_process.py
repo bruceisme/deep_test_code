@@ -16,7 +16,7 @@ lines = read_text()
 #将文本行拆分为单词或字符标记（token）列表/词元
 def tokenize(lines, token='word'):
     if token == 'word':
-        #返回结果一个词作为一个token
+        #返回结果一个词作为一个token，[[],[],[]]
         return [line.split() for line in lines]
     elif token == 'char':
         #返回结果一个字符作为一个tokrn
@@ -59,13 +59,10 @@ class Vocab:
         return len(self.idx_to_token)
     
     #查找索引
-    def __gititem__(self, tokens):
-        #先判断是否是列表或者元组（是否只是一个token）
+    def __getitem__(self, tokens):
         if not isinstance(tokens, (list, tuple)):
-            #如果不是2D
-            #找不到，输出默认值self.unk
             return self.token_to_idx.get(tokens, self.unk)
-        return[self.__gititem__(token) for token in tokens]
+        return [self.__getitem__(token) for token in tokens]
     
     #查找字符
     def to_tokens(self, indices):
@@ -88,6 +85,7 @@ def load_corpus_text(max_tokens=-1):
 
     #将所有文本展平到一个列表中
     corpus = [vocab[token] for line in tokens for token in line]
+
     if max_tokens>0:
         corpus = corpus[:max_tokens]
     return corpus, vocab
