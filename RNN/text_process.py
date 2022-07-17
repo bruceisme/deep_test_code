@@ -28,7 +28,6 @@ def tokenize(lines, token='word'):
         return [list[line] for line in lines]
     else:
         print('错误：未知令牌类型：'+token)
-
 class Vocab:
     #将token映射到从0开始的数字索引中
     def __init__(self, tokens=None, min_freq=0, reserved_tokens=None):
@@ -47,7 +46,6 @@ class Vocab:
         #构建索引和token的字典
         self.token_to_idx = {token: idx
                              for idx, token in enumerate(self.idx_to_token)}
-
         for token, freq in self._token_freqs:
             if freq < min_freq:
                 break
@@ -61,7 +59,6 @@ class Vocab:
         if not isinstance(tokens, (list, tuple)):
             return self.token_to_idx.get(tokens, self.unk)
         return [self.__getitem__(token) for token in tokens]
-    
     #查找字符
     def to_tokens(self, indices):
         if not isinstance(indices, (list, tuple)):
@@ -73,6 +70,7 @@ class Vocab:
     @property
     def token_freqs(self):
         return self._token_freqs
+
 def count_corpus(tokens):  
     """统计词元的频率"""
     # 这里的tokens是1D列表或2D列表
